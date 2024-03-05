@@ -1,3 +1,8 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <dirent.h>
 
 int main() {
@@ -6,12 +11,8 @@ int main() {
 
  
     child_pid = fork();
-    if(pid<0){
-    printf("fork failed");
-    exit(1);
-    }
 
-    else if (child_pid == 0) {
+    if (child_pid == 0) {
        
         printf("Child process id is : %d, parent process id is : %d\n", getpid(), getppid());
         exit(0);
@@ -38,4 +39,3 @@ int main() {
     closedir(dir);
 
     return 0;
-}
