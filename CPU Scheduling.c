@@ -1,155 +1,436 @@
 #include<stdio.h>
+#include<string.h>
 
-// Process structure
-struct Process {
-    int id;             // Process ID
-    int arrival_time;   // Arrival time
-    int burst_time;     // Burst time
-    int priority;       // Priority
-    int remaining_time; // Remaining burst time for Round Robin
-};
+int q[100],front=-1,rear=-1;
 
-// Function to calculate completion, turnaround, and waiting times for each process for FCFS, SJF, and Non-Preemptive Priority
-void calculateTimes(struct Process processes[], int n) {
-    int current_time = 0;
-    for (int i = 0; i < n; i++) {
-        // Update current time to max of arrival time and current time
-        current_time = (current_time < processes[i].arrival_time) ? processes[i].arrival_time : current_time;
-        
-        // Calculate completion time
-        processes[i].completion_time = current_time + processes[i].burst_time;
-        
-        // Calculate turnaround time
-        processes[i].turnaround_time = processes[i].completion_time - processes[i].arrival_time;
-        
-        // Calculate waiting time
-        processes[i].waiting_time = processes[i].turnaround_time - processes[i].burst_time;
-        
-        // Update current time
-        current_time = processes[i].completion_time;
+struct process
+{
+  char name[20];
+  int at,tt,bt,wt,ct,status,left,pr;
+}p[20],temp;
+
+struct done
+{
+  char name[20];
+  int st,ct;
+}d[20];
+
+void enqueue(int j)
+{
+  if(front==-1 && rear==-1)
+  {
+    front++;
+  }
+  rear++;
+  q[rear] = j;
+}
+int dequeue()
+{
+  int item;
+  item = q[front];
+  if(front == rear)
+  {
+    front = -1;
+    rear = -1;
+  }
+  else
+  {
+    front++;
+  }
+  return(item);
+}
+void roundrobin()
+{
+  int n,i,j,idle=0,k,num,ls,t;
+  float avwt=0,avtt=0;
+  printf("ENTER THE NUMBER OF PROCESSES : ");
+  scanf("%d",&n);
+  for(i=0;i<n;i++)                         //Input process details
+  {
+    printf("\nENTER DETAILS OF PROCESS %d",i+1);
+    printf("\nPROCESS NAME : ");
+    scanf(" %s",p[i].name);
+    printf("ARRIVAL TIME : ");
+    scanf("%d",&p[i].at);
+    printf("BURST TIME : ");
+    scanf("%d",&p[i].bt);
+    p[i].left = p[i].bt;
+    p[i].status = 0;
+  }
+  printf("\nENTER THE TIME QUANTUM : ");
+  scanf("%d",&t);
+
+  for(i=0,num=0,ls=0;ls<n;)
+  {
+    for(j=0;j<n;j++)
+    {
+      if(p[j].status==0 && p[j].at<=i)
+      {
+        enqueue(j);
+        p[j].status = 1;
+      }
     }
+    if(idle==0 && front == -1)
+    {
+      strcpy(d[num].name,"Idle");
+      d[num].st = i;
+      idle = 1;
+      i++;
+    }
+    else if(front!=-1)
+    {
+      if(idle==1)
+      {
+        d[num].ct = i;
+        idle = 0;
+        num++;
+      }
+      k = dequeue();
+      d[num].st = i;
+      strcpy(d[num].name,p[k].name);
+      if(p[k].left<=t)
+      {
+        d[num].ct = i+p[k].left;
+        p[k].ct = d[num].ct;
+        i = d[num].ct;
+        p[k].tt = i - p[k].at;
+        p[k].wt = p[k].tt - p[k].bt;
+        p[k].status = 2;
+        ls++;
+        num++;
+      }
+      else if(p[k].left>t)
+      {
+        d[num].ct = i+t;
+        i = d[num].ct;
+        p[k].left = p[k].left-t;
+        num++;
+        for(j=0;j<n;j++)
+        {
+          if(p[j].status==0 && p[j].at<=i)
+          {
+            enqueue(j);
+            p[j].status = 1;
+          }
+        }
+        enqueue(k);
+      }
+    }
+    else
+    {
+      i++;
+    }
+  }
+
+  printf("\nPROCESS NAME\tCOMPLETION TIME (ms)\tWAITING TIME (ms)\tTURNAROUND TIME (ms)\n\n");
+  for(i=0;i<n;i++)
+  {
+    printf("    %s\t\t\t%d\t\t\t%d\t\t\t%d\n",p[i].name,p[i].ct,p[i].wt,p[i].tt);
+    avwt+=p[i].wt;
+    avtt+=p[i].tt;
+  }
+  printf("\n\nGANTT CHART ");
+  printf("\n\t--------------------------------------------------------------------------\n\t");
+  for(i=0;i<num;i++)
+  {
+    printf("|");
+    printf("%s\t",d[i].name);
+  }
+  printf(" |");
+  printf("\n\t--------------------------------------------------------------------------\n\t");
+  for(i=0;i<num;i++)
+  {
+      printf("%d\t",d[i].st);
+  }
+  printf("%d\t",d[num-1].ct);
+  printf("\n\nAVERAGE WAITING TIME : %f",(avwt/n));
+  printf("\nAVERAGE TURNAROUND TIME : %f\n",(avtt/n));
 }
 
-// Function to calculate completion, turnaround, and waiting times for each process for Round Robin
-void calculateRoundRobinTimes(struct Process processes[], int n, int quantum) {
-    int current_time = 0;
-    int remaining_processes = n;
-    int index = 0;
-
-    while (remaining_processes > 0) {
-        if (processes[index].remaining_time <= quantum && processes[index].remaining_time > 0) {
-            current_time += processes[index].remaining_time;
-            processes[index].remaining_time = 0;
-            processes[index].completion_time = current_time;
-            remaining_processes--;
-        } else if (processes[index].remaining_time > 0) {
-            current_time += quantum;
-            processes[index].remaining_time -= quantum;
+void priority()
+{
+  int n,i,j,ls,min,fnd,num,idle;
+  float twt=0.0,ttt=0.0;
+  printf("ENTER THE NUMBER OF PROCESSES : ");
+  scanf("%d",&n);
+  for(i=0;i<n;i++)                         //Input process details
+  {
+    printf("\nENTER DETAILS OF PROCESS %d",i+1);
+    printf("\nPROCESS NAME : ");
+    scanf(" %s",p[i].name);
+    printf("ARRIVAL TIME : ");
+    scanf("%d",&p[i].at);
+    printf("BURST TIME : ");
+    scanf("%d",&p[i].bt);
+    printf("PRIORITY : ");
+    scanf("%d",&p[i].pr);
+    p[i].status = 0;
+  }
+  for(i=0,ls=0,num=0,idle=0;ls<n;)
+  {
+    for(j=0,fnd=0;j<n;j++)
+    {
+      if(i>=p[j].at && p[j].status==0)
+      {
+        if(fnd==0)
+        {
+          min = j;
+          fnd = 1;
         }
-
-        index = (index + 1) % n;
+        else if((p[min].pr>p[j].pr)||(p[min].pr==p[j].pr && p[min].at>p[j].at))
+        {
+          min = j;
+        }
+      }
     }
-
-    // Calculate turnaround and waiting times
-    for (int i = 0; i < n; i++) {
-        processes[i].turnaround_time = processes[i].completion_time - processes[i].arrival_time;
-        processes[i].waiting_time = processes[i].turnaround_time - processes[i].burst_time;
+    if(idle==0 && fnd==0)
+    {
+      strcpy(d[num].name,"Idle");
+      d[num].st = i;
+      i++;
+      idle = 1;
     }
+    else if(fnd==1)
+    {
+      if(idle==1)
+      {
+        d[num].ct = i;
+        num++;
+        idle = 0;
+      }
+      strcpy(d[num].name,p[min].name);
+      p[min].status =1;
+      d[num].st = i;
+      d[num].ct = i + p[min].bt;
+      i = d[num].ct;
+      p[min].ct = d[num].ct;
+      p[min].tt = p[min].ct - p[min].at;
+      p[min].wt = p[min].tt - p[min].bt;
+      num++;
+      ls++;
+    }
+    else
+    {
+      i++;
+    }
+  }
+  printf("\nPROCESS NAME\tCOMPLETION TIME (ms)\tWAITING TIME (ms)\tTURNAROUND TIME (ms)\n\n");
+  for(i=0;i<n;i++)
+  {
+    printf("    %s\t\t\t%d\t\t\t%d\t\t\t%d\n",p[i].name,p[i].ct,p[i].wt,p[i].tt);
+    twt+=p[i].wt;
+    ttt+=p[i].tt;
+  }
+  printf("\n\nGANTT CHART ");
+  printf("\n\t--------------------------------------------------------------------\n\t");
+  for(i=0;i<num;i++)
+  {
+    printf("|");
+    printf("%s\t",d[i].name);
+  }
+  printf(" |");
+  printf("\n\t--------------------------------------------------------------------\n\t");
+  for(i=0;i<num;i++)
+  {
+      printf("%d\t",d[i].st);
+  }
+  printf("%d\t\n",d[num-1].ct);
+  printf("\nAVERAGE WAITING TIME : %f",(twt/n));
+  printf("\nAVERAGE TURNAROUND TIME : %f\n",(ttt/n));
 }
 
-// Function to display process details
-void displayProcesses(struct Process processes[], int n) {
-    printf("Process\tArrival Time\tBurst Time\tCompletion Time\tTurnaround Time\tWaiting Time\n");
-    for (int i = 0; i < n; i++) {
-        printf("%d\t%d\t\t%d\t\t%d\t\t%d\t\t%d\n", processes[i].id, processes[i].arrival_time, processes[i].burst_time,
-                processes[i].completion_time, processes[i].turnaround_time, processes[i].waiting_time);
+void sjf()
+{
+  int n,i,j,ls,min,fnd,num,idle;
+  float twt=0.0,ttt=0.0;
+  printf("ENTER THE NUMBER OF PROCESSES : ");
+  scanf("%d",&n);
+  for(i=0;i<n;i++)                         //Input process details
+  {
+    printf("\nENTER DETAILS OF PROCESS %d",i+1);
+    printf("\nPROCESS NAME : ");
+    scanf(" %s",p[i].name);
+    printf("ARRIVAL TIME : ");
+    scanf("%d",&p[i].at);
+    printf("BURST TIME : ");
+    scanf("%d",&p[i].bt);
+    p[i].status = 0;
+  }
+  for(i=0,ls=0,num=0,idle=0;ls<n;)
+  {
+    for(j=0,fnd=0;j<n;j++)
+    {
+      if(i>=p[j].at && p[j].status==0)
+      {
+        if(fnd==0)
+        {
+          min = j;
+          fnd = 1;
+        }
+        else if(fnd!=0 && p[min].bt>p[j].bt)
+        {
+          min = j;
+        }
+      }
     }
+    if(idle==0 && fnd==0)
+    {
+      strcpy(d[num].name,"Idle");
+      d[num].st = i;
+      i++;
+      idle = 1;
+    }
+    else if(fnd==1)
+    {
+      if(idle==1)
+      {
+        d[num].ct = i;
+        num++;
+        idle = 0;
+      }
+      strcpy(d[num].name,p[min].name);
+      p[min].status =1;
+      d[num].st = i;
+      d[num].ct = i + p[min].bt;
+      i = d[num].ct;
+      p[min].ct = d[num].ct;
+      p[min].tt = p[min].ct - p[min].at;
+      p[min].wt = p[min].tt - p[min].bt;
+      num++;
+      ls++;
+    }
+    else
+    {
+      i++;
+    }
+  }
+  printf("\nPROCESS NAME\tCOMPLETION TIME (ms)\tWAITING TIME (ms)\tTURNAROUND TIME (ms)\n\n");
+  for(i=0;i<n;i++)
+  {
+    printf("    %s\t\t\t%d\t\t\t%d\t\t\t%d\n",p[i].name,p[i].ct,p[i].wt,p[i].tt);
+    twt+=p[i].wt;
+    ttt+=p[i].tt;
+  }
+  printf("\n\nGANTT CHART ");
+  printf("\n\t--------------------------------------------------------------------\n\t");
+  for(i=0;i<num;i++)
+  {
+    printf("|");
+    printf("%s\t",d[i].name);
+  }
+  printf(" |");
+  printf("\n\t--------------------------------------------------------------------\n\t");
+  for(i=0;i<num;i++)
+  {
+      printf("%d\t",d[i].st);
+  }
+  printf("%d\t\n",d[num-1].ct);
+  printf("\nAVERAGE WAITING TIME : %f",(twt/n));
+  printf("\nAVERAGE TURNAROUND TIME : %f\n",(ttt/n));
 }
 
-// Main function
-int main() {
-    int n, quantum;
-    printf("Enter the number of processes: ");
-    scanf("%d", &n);
-    printf("Enter the time quantum for Round Robin: ");
-    scanf("%d", &quantum);
-
-    // Create an array of processes
-    struct Process processes[n];
-
-    // Input process details
-    for (int i = 0; i < n; i++) {
-        printf("Enter details for Process %d:\n", i + 1);
-        processes[i].id = i + 1;
-        printf("Arrival Time: ");
-        scanf("%d", &processes[i].arrival_time);
-        printf("Burst Time: ");
-        scanf("%d", &processes[i].burst_time);
-        printf("Priority: ");
-        scanf("%d", &processes[i].priority);
-        processes[i].remaining_time = processes[i].burst_time; // Initialize remaining time for Round Robin
+void fcfs()
+{
+  int i,j,n,num,idle=0;
+  float avwt=0;
+  float avtt=0;
+  printf("ENTER THE NUMBER OF PROCESSES : ");
+  scanf("%d",&n);
+  for(i=0;i<n;i++)                         //Input process details
+  {
+    printf("\nENTER DETAILS OF PROCESS %d",i+1);
+    printf("\nPROCESS NAME : ");
+    scanf(" %s",p[i].name);
+    printf("ARRIVAL TIME : ");
+    scanf("%d",&p[i].at);
+    printf("BURST TIME : ");
+    scanf("%d",&p[i].bt);
+    p[i].status = 0;
+  }
+  for(i=0;i<n;i++)                       //Sorting based on at
+  {
+    for(j=0;j<n-i-1;j++)
+    {
+      if(p[j].at > p[j+1].at)
+      {
+        temp = p[j];
+        p[j] = p[j+1];
+        p[j+1] = temp;
+      }
     }
+  }
+  for(i=0,j=0,num=0;j<n;)              //Calculations
+  {
+    if(p[j].at<=i && p[j].status==0)
+    {
+      if(idle==1)
+      {
+        d[num].ct=i;
+        num++;
+        idle = 0;
+      }
+      strcpy(d[num].name,p[j].name);
+      d[num].st = i;
+      d[num].ct = i + p[j].bt;
+      p[j].wt = d[num].st - p[j].at;
+      p[j].tt = p[j].wt + p[j].bt;
+      p[j].ct = d[num].ct;
+      i = d[num].ct;
+      p[j].status = 1;
+      j++;
+      num++;
 
-    // Sort processes by arrival time for FCFS
-    for (int i = 0; i < n - 1; i++) {
-        for (int j = 0; j < n - i - 1; j++) {
-            if (processes[j].arrival_time > processes[j + 1].arrival_time) {
-                struct Process temp = processes[j];
-                processes[j] = processes[j + 1];
-                processes[j + 1] = temp;
-            }
+    }
+    else if(idle == 0)
+    {
+      strcpy(d[num].name,"Idle");
+      d[num].st = i;
+      i++;
+      idle = 1;
+    }
+    else
+    {
+      i++;
+    }
+  }
+  printf("\nPROCESS NAME\tCOMPLETION TIME (ms)\tWAITING TIME (ms)\tTURNAROUND TIME (ms)\n");
+  for(int i=0;i<n;i++)
+  {
+    printf("    %s\t\t\t%d\t\t\t%d\t\t\t%d\n",p[i].name,p[i].ct,p[i].wt,p[i].tt);
+    avwt+=p[i].wt;
+    avtt+=p[i].tt;
+  }
+  printf("\n\nGANTT CHART ");
+  printf("\n----------------------------------------------------------\n");
+      for(i=0;i<num;i++)
+      {
+          printf("|");
+          printf("   %s\t",d[i].name);
+       }
+       printf(" |");
+       printf("\n----------------------------------------------------------\n");
+       for(i=0;i<num;i++)
+       {
+          printf("%d\t",d[i].st);
+       }
+       printf("%d\t",d[num-1].ct);
+  printf("\n\nAVERAGE WAITING TIME : %f",(avwt/n));
+  printf("\nAVERAGE TURNAROUND TIME : %f\n",(avtt/n));
+}
+
+int main(){
+    int choice;
+    while(choice!=5){
+        printf("\n--Menu--\n");
+        printf("1.FCFS   2.SJF   3.Priority   4.Round Robin   5.Exit\nEnter choice:");
+        scanf("%d",&choice);
+        switch(choice){
+            case 1: fcfs();break;
+            case 2: sjf();break;
+            case 3: priority();break;
+            case 4: roundrobin();break;
+            case 5: break;
+            default: printf("\nInvalid Choice\n");break;
         }
     }
-
-    // Calculate completion, turnaround, and waiting times for FCFS, SJF, and Non-Preemptive Priority
-    calculateTimes(processes, n);
-
-    // Display process details for FCFS, SJF, and Non-Preemptive Priority
-    printf("\nFCFS Scheduling:\n");
-    displayProcesses(processes, n);
-
-    // Sort processes by burst time for SJF
-    for (int i = 0; i < n - 1; i++) {
-        for (int j = 0; j < n - i - 1; j++) {
-            if (processes[j].burst_time > processes[j + 1].burst_time) {
-                struct Process temp = processes[j];
-                processes[j] = processes[j + 1];
-                processes[j + 1] = temp;
-            }
-        }
-    }
-
-    // Calculate completion, turnaround, and waiting times for SJF
-    calculateTimes(processes, n);
-
-    // Display process details for SJF
-    printf("\nSJF Scheduling:\n");
-    displayProcesses(processes, n);
-
-    // Sort processes by priority for Non-Preemptive Priority
-    for (int i = 0; i < n - 1; i++) {
-        for (int j = 0; j < n - i - 1; j++) {
-            if (processes[j].priority > processes[j + 1].priority) {
-                struct Process temp = processes[j];
-                processes[j] = processes[j + 1];
-                processes[j + 1] = temp;
-            }
-        }
-    }
-
-    // Calculate completion, turnaround, and waiting times for Non-Preemptive Priority
-    calculateTimes(processes, n);
-
-    // Display process details for Non-Preemptive Priority
-    printf("\nNon-Preemptive Priority Scheduling:\n");
-    displayProcesses(processes, n);
-
-    // Calculate completion, turnaround, and waiting times for Round Robin
-    calculateRoundRobinTimes(processes, n, quantum);
-
-    // Display process details for Round Robin
-    printf("\nRound Robin Scheduling (Time Quantum = %d):\n", quantum);
-    displayProcesses(processes, n);
-
-    return 0;
 }
