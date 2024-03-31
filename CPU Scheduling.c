@@ -70,7 +70,7 @@ void roundrobin() {
     printf("Enter the no.of processes : ");
     scanf("%d", &n);
     inputProcesses(p, n);
-    printf("\nEnter the time quatum : ");
+    printf("\nEnter the time quantum : ");
     scanf("%d", &t);
 
     for (i = 0, num = 0, ls = 0; ls < n;) {
