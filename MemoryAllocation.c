@@ -1,4 +1,4 @@
-#include<stdio.h>
+uni#include<stdio.h>
 
 void main() {
     int bsize[10], psize[10], bno, pno, flags[10], allocation[10], i, j;
@@ -81,5 +81,53 @@ void main() {
     printf("\nProcess_no\tProcess_size\tBlock_no\tBlock_size\tFragment\n");
     for (i = 1; i <= np && parray[i] != 0; i++) {
         printf("%d\t\t%d\t\t%d\t\t%d\t\t%d\n", i, p[i], parray[i], b[parray[i]], fragment[i]);
+    }
+}
+#include<stdio.h>
+
+void main() {
+    int bsize[20], psize[20], all[20], m, n, i, j;
+
+    printf("Enter the number of Blocks: ");
+    scanf("%d", &m);
+
+    printf("Enter the size of each block: ");
+    for(i = 0; i < m; i++)
+        scanf("%d", &bsize[i]);
+
+    printf("Enter the number of processes: ");
+    scanf("%d", &n);
+
+    printf("Enter the size of each process: ");
+    for(i = 0; i < n; i++)
+        scanf("%d", &psize[i]);
+
+    for(i = 0; i < n; i++) {
+        int worstplace = -1;
+
+        for(j = 0; j < m; j++) {
+            if(bsize[j] >= psize[i]) {
+                if (worstplace == -1 || bsize[worstplace] < bsize[j]) {
+                    worstplace = j;
+                }
+            }
+        }
+
+        if(worstplace != -1) {
+            all[i] = worstplace;
+            bsize[worstplace] -= psize[i];
+        }
+        else {
+            all[i] = -1;
+        }
+    }
+
+    printf("\nProcess No.\tProcess Size\tBlock no.\n");
+    for(i = 0; i < n; i++) {
+        printf(" %d\t\t%d\t\t", i + 1, psize[i]);
+        if (all[i] != -1)
+            printf("%d\n", all[i] + 1); // Adding 1 to block number for human readability
+        else
+            printf("Not Allocated\n");
     }
 }
