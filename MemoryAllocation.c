@@ -1,73 +1,35 @@
-uni#include<stdio.h>
+#include <stdio.h>
 
-void main() {
-    int bsize[10], psize[10], bno, pno, flags[10], allocation[10], i, j;
+void firstFit(int bsize[], int psize[], int bno, int pno) {
+    int allocation[10] = {-1}; // Initialize allocation array to -1 (unallocated)
 
-    for(i = 0; i < 10; i++) {
-        flags[i] = 0;
-        allocation[i] = -1;
-    }
-
-    printf("Enter no. of blocks: ");
-    scanf("%d", &bno);
-    printf("\nEnter size of each block: ");
-    for(i = 0; i < bno; i++)
-        scanf("%d", &bsize[i]);
-
-    printf("\nEnter no. of processes: ");
-    scanf("%d", &pno);
-    printf("\nEnter size of each process: ");
-    for(i = 0; i < pno; i++)
-        scanf("%d", &psize[i]);
-
-    for(i = 0; i < pno; i++) {
-        for(j = 0; j < bno; j++) {
-            if (bsize[j] >= psize[i]) {
-                allocation[i] = j; // allocate block j to process i
-                bsize[j] -= psize[i]; // reduce available memory in this block
+    for (int i = 0; i < pno; i++) {
+        for (int j = 0; j < bno; j++) {
+            if (bsize[j] >= psize[i] && allocation[j] == -1) {
+                allocation[j] = i; // Allocate block j to process i
                 break;
             }
         }
     }
 
     printf("\nProcess No.\tProcess Size\tBlock no.\n");
-    for(i = 0; i < pno; i++) {
+    for (int i = 0; i < pno; i++) {
         printf(" %d\t\t%d\t\t", i + 1, psize[i]);
         if (allocation[i] != -1)
-            printf("%d\n", allocation[i] + 1); // add 1 to block number to make it human-readable
+            printf("%d\n", allocation[i] + 1); // Add 1 to block number for human readability
         else
             printf("Not Allocated\n");
     }
 }
-#include <stdio.h>
 
-void main() {
-    int fragment[20], b[20], p[20], barray[20], parray[20], i, j, nb, np, temp, lowest;
+void bestFit(int bsize[], int psize[], int bno, int pno) {
+    int fragment[20] = {0}, barray[20] = {0}, parray[20] = {0}, lowest;
 
-    printf("\n\t\t\tMemory Management Scheme - Best Fit\n");
-    printf("Enter the number of blocks: ");
-    scanf("%d", &nb);
-    printf("Enter the size of the blocks:\n");
-    for (i = 1; i <= nb; i++) {
-        printf("Block no.%d: ", i);
-        scanf("%d", &b[i]);
-        barray[i] = 0; // Initialize block array
-    }
-
-    printf("\nEnter the number of processes: ");
-    scanf("%d", &np);
-    printf("Enter the size of the processes:\n");
-    for (i = 1; i <= np; i++) {
-        printf("Process no.%d: ", i);
-        scanf("%d", &p[i]);
-        parray[i] = 0; // Initialize process array
-    }
-
-    for (i = 1; i <= np; i++) {
+    for (int i = 1; i <= pno; i++) {
         lowest = 9999; // Initialize lowest to a large value
-        for (j = 1; j <= nb; j++) {
-            if (barray[j] == 0) { // Check if block is not allocated
-                temp = b[j] - p[i];
+        for (int j = 1; j <= bno; j++) {
+            if (barray[j] == 0 && bsize[j] >= psize[i]) {
+                int temp = bsize[j] - psize[i];
                 if (temp >= 0 && temp < lowest) {
                     parray[i] = j; // Allocate block to process
                     lowest = temp; // Update lowest fragment
@@ -79,55 +41,80 @@ void main() {
     }
 
     printf("\nProcess_no\tProcess_size\tBlock_no\tBlock_size\tFragment\n");
-    for (i = 1; i <= np && parray[i] != 0; i++) {
-        printf("%d\t\t%d\t\t%d\t\t%d\t\t%d\n", i, p[i], parray[i], b[parray[i]], fragment[i]);
+    for (int i = 1; i <= pno && parray[i] != 0; i++) {
+        printf("%d\t\t%d\t\t%d\t\t%d\t\t%d\n", i, psize[i], parray[i], bsize[parray[i]], fragment[i]);
     }
 }
-#include<stdio.h>
 
-void main() {
-    int bsize[20], psize[20], all[20], m, n, i, j;
+void worstFit(int bsize[], int psize[], int bno, int pno) {
+    int allocation[10] = {-1}; // Initialize allocation array to -1 (unallocated)
 
-    printf("Enter the number of Blocks: ");
-    scanf("%d", &m);
-
-    printf("Enter the size of each block: ");
-    for(i = 0; i < m; i++)
-        scanf("%d", &bsize[i]);
-
-    printf("Enter the number of processes: ");
-    scanf("%d", &n);
-
-    printf("Enter the size of each process: ");
-    for(i = 0; i < n; i++)
-        scanf("%d", &psize[i]);
-
-    for(i = 0; i < n; i++) {
+    for (int i = 0; i < pno; i++) {
         int worstplace = -1;
-
-        for(j = 0; j < m; j++) {
-            if(bsize[j] >= psize[i]) {
+        for (int j = 0; j < bno; j++) {
+            if (bsize[j] >= psize[i]) {
                 if (worstplace == -1 || bsize[worstplace] < bsize[j]) {
                     worstplace = j;
                 }
             }
         }
-
-        if(worstplace != -1) {
-            all[i] = worstplace;
-            bsize[worstplace] -= psize[i];
-        }
-        else {
-            all[i] = -1;
+        if (worstplace != -1) {
+            allocation[i] = worstplace; // Allocate block worstplace to process i
+            bsize[worstplace] -= psize[i]; // Reduce available memory in this block
         }
     }
 
     printf("\nProcess No.\tProcess Size\tBlock no.\n");
-    for(i = 0; i < n; i++) {
+    for (int i = 0; i < pno; i++) {
         printf(" %d\t\t%d\t\t", i + 1, psize[i]);
-        if (all[i] != -1)
-            printf("%d\n", all[i] + 1); // Adding 1 to block number for human readability
+        if (allocation[i] != -1)
+            printf("%d\n", allocation[i] + 1); // Add 1 to block number for human readability
         else
             printf("Not Allocated\n");
     }
+}
+
+int main() {
+    int choice, bsize[10], psize[10], bno, pno;
+
+    printf("Enter the number of blocks: ");
+    scanf("%d", &bno);
+    printf("Enter size of each block: ");
+    for (int i = 0; i < bno; i++)
+        scanf("%d", &bsize[i]);
+
+    printf("Enter the number of processes: ");
+    scanf("%d", &pno);
+    printf("Enter size of each process: ");
+    for (int i = 0; i < pno; i++)
+        scanf("%d", &psize[i]);
+
+    do {
+        printf("\nMemory Management Menu\n");
+        printf("1. First Fit\n");
+        printf("2. Best Fit\n");
+        printf("3. Worst Fit\n");
+        printf("4. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 1:
+                firstFit(bsize, psize, bno, pno);
+                break;
+            case 2:
+                bestFit(bsize, psize, bno, pno);
+                break;
+            case 3:
+                worstFit(bsize, psize, bno, pno);
+                break;
+            case 4:
+                printf("Exiting program.\n");
+                break;
+            default:
+                printf("Invalid choice. Please enter a valid option.\n");
+        }
+    } while (choice != 4);
+
+    return 0;
 }
