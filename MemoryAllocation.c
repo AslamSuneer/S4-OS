@@ -1,22 +1,5 @@
 #include <stdio.h>
 
-
-void input_processes(int m, int ps[]){
-	for (int i=0; i<m; i++){
-		printf("Enter Size of Process %d : ", i+1);
-		scanf("%d", &ps[i]);
-	}
-}
-
-void input_blocks(int n,int bs[]){
-	for (int i=0;i<n;i++){
-		printf("Enter Size of Block %d : ",i+1);
-		scanf("%d",&bs[i]);
-	}
-
-}
-
-
 void first_fit(int ps[100],int ts[100],int m,int n){
 	int allocation[100];
 	for (int i=0;i<m;i++){
@@ -117,42 +100,42 @@ void main(){
 	int ch=0;	
 	int ps[100];
 	int bs[100];
-	int m,n;
+	int m,n,i;
 	int ts[100];
+		printf("Enter number of blocks : ");
+				scanf("%d",&n);
+		printf("Enter Size of Block  : ",i+1);
+			for (int i=0;i<n;i++)
+		scanf("%d",&bs[i]);
+		printf("Enter number of processes : ");
+				scanf("%d",&m);
+				printf("Enter Size of Process  : ", i+1);
+		for (int i=0; i<m; i++)
+		scanf("%d", &ps[i]);
 	while (ch!=10){
-		printf("\n1.Input Processes\n2.Input Blocks\n3.First Fit\n4.Best Fit\n5.Worst Fit\n10.Exit\n");
+		printf("\n1.First Fit\n2.Best Fit\n3.Worst Fit\n4.Exit\n");
 		printf("Enter Choice : ");
 		scanf("%d",&ch);
 		switch (ch){
 			case 1: 
-				printf("Enter number of processes : ");
-				scanf("%d",&m);
-				input_processes(m,ps);
-				break;
-			case 2: 
-				printf("Enter number of blocks : ");
-				scanf("%d",&n);
-				input_blocks(n,bs);
-				break;
-			case 3: 
 				for (int i = 0; i < n; i++) {
 					ts[i] = bs[i];
 				}
 				first_fit(ps,ts,m,n);
 				break;
-			case 4:
+			case 2:
 				for (int i = 0; i < n; i++) {
 					ts[i] = bs[i];
 				}
 				best_fit(ps,ts,m,n);
 				break;
-			case 5:
+			case 3:
 				for (int i = 0; i < n; i++) {
 					ts[i] = bs[i];
 				}
 				worst_fit(ps,ts,m,n);
 				break;
-			case 10: 
+			case 4: 
 				break;
 			default: 
 				printf("Invalid Choice\n");
@@ -162,4 +145,3 @@ void main(){
 
 
 }
-
